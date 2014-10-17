@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="236" height="134">
+	
+	<fx:Script>
+		<![CDATA[
+			
+			public static var TUTORIAL_NEXT:String = "tutorialNext";
+			public static var TUTORIAL_CLOSE:String = "tutorialClose";
+			
+			public function load(obj:Object, isFinal:Boolean = false):void{
+				txMain.text = obj.text;
+								
+				if(isFinal){
+					btNext.label = " Done ";
+				}else{
+					btNext.label = " Next >> ";
+				}
+			}
+			
+			public function setArrowLocation(arrowLocation:String):void{
+				trace(arrowLocation);
+				switch(arrowLocation){
+					case "top_right":
+						imgArrow.rotation = 270;
+						imgArrow.x = this.border.width - 20;
+						imgArrow.y = imgArrow.height;
+						break;
+					case "top_left":
+						imgArrow.rotation = 90;
+						imgArrow.x = 10;
+						imgArrow.y = 0;
+						break;
+					case "bottom_right":
+						imgArrow.rotation = 270;
+						imgArrow.x = this.border.width - 20;
+						imgArrow.y = this.border.height;
+						break;
+					case "bottom_left":
+						imgArrow.rotation = 90;
+						imgArrow.x = 10;
+						imgArrow.y = this.border.height - imgArrow.width;
+						break;
+					case "bottom_middle":
+						imgArrow.rotation = 0;
+						imgArrow.x = this.border.width/2 - imgArrow.width/2;
+						break;
+				}
+			}
+						
+			protected function btClose_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Event(TutorialPopup.TUTORIAL_CLOSE));	
+			}
+						
+			protected function btNext_clickHandler(event:MouseEvent):void
+			{
+				this.dispatchEvent(new Event(TutorialPopup.TUTORIAL_NEXT));				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Image id="imgArrow" x="218" y="128" width="47" height="47" scaleMode="letterbox" smooth="true"
+				 source="@Embed('assets/arrow_down.png')"/>
+	<s:BorderContainer id="border" x="0" y="0" width="236" height="134" backgroundColor="#F6E7E7"
+					   cornerRadius="20" dropShadowVisible="true">
+		
+		<s:Label id="txMain" x="8" y="34" width="219" height="88" fontSize="14" text="Label"
+				 verticalAlign="middle"/>
+		<s:Button id="btNext" x="149" y="6" width="79" label="Next &gt;&gt;"
+				  click="btNext_clickHandler(event)" color="#5CAE05" fontSize="14" fontWeight="bold"/>
+		<s:Button id="btClose" x="10" y="6" width="30" label="X" click="btClose_clickHandler(event)"
+				  color="#DE0404" fontSize="15" fontWeight="bold"/>
+	</s:BorderContainer>
+</s:Group>

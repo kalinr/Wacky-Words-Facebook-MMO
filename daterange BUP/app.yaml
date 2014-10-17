@@ -1,0 +1,33 @@
+application: inventionsalesworld
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /getDates/.*
+  script: main.py
+
+- url: /getCustomField/.*
+  script: main.py
+
+- url: /getBannerDates/.*
+  script: main.py
+
+- url: /getBannerCustomFields/.*
+  script: main.py
+    
+- url: /getMultiIds/.*
+  script: main.py    
+    
+- url: /css
+  static_dir: css
+  
+- url: /js
+  static_dir: js
+  
+- url: /stats.*
+  script: $PYTHON_LIB/google/appengine/ext/appstats/ui.py
+    
+- url: /.*
+  script: main.py
+  login: admin

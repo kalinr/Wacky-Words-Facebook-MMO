@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="170" height="64">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			
+			public function showLevelUp(n:uint):void {
+				//this.tx1.text = n + " XP!";
+				this.txLevel.text = "!" + n + "!";
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Label id="tx1" x="10" y="7" width="150" height="22" color="#EA1212" fontSize="21"
+			 text="Level Up!!!!" textAlign="center"/>
+	<s:Label id="txLevel" x="10" y="28" width="150" height="34" color="#EA1212" fontSize="35"
+			 text="Level Up!!!!" textAlign="center"/>
+</s:Group>

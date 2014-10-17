@@ -1,0 +1,10 @@
+cron:
+- description: DailyStats MapReduce
+  url: /cron_mapreduce?name=dailyUserUpdates&reader_spec=main.dailyUserUpdate&entity_kind=main.User
+  schedule: every day 00:00
+- description: DailyPayout MapReduce
+  url: /cron_mapreduce?name=dailyInvestmentPayouts&reader_spec=main.dailyInvestmentPayout&entity_kind=main.Product
+  schedule: every day 12:00
+- description: Weekly stats MapReduce
+  url: /cron_mapreduce?name=weeklyUserUpdates&reader_spec=main.weeklyUserUpdate&entity_kind=main.User
+  schedule: every monday 06:00

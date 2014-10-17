@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 addedToStage="handleAddedToStage()"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="740" height="545">
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.core.IUIComponent;
+			import mx.events.DragEvent;
+			import mx.managers.DragManager;
+			
+			import spark.components.Label;
+			import spark.filters.DropShadowFilter;
+			
+			import viewassets.WordCard;
+			
+			
+			//REMEMBER the error that was getting thrown when you trash all words that you've dragged to the box. gotta fix that.
+			
+			private function drawCard(_type:String):void {
+				var usr:User = User.getInstance();
+				if(grCards.numElements >= usr.wordHandMax){
+					Alert.show("Sorry, no more than " + usr.wordHandMax + " cards allowed. To discard, drag a card to the garbage.");
+					return;
+				}
+				
+				var vars:Object = {type:_type};				
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.DRAW_CARD, vars, onDrawCardComplete);
+			}
+			
+			private function onDrawCardComplete(data:Object, passThru:Object):void {
+				var wc:WordCard = new WordCard();
+				wc.lbWord.text = data.word;
+				wc.txDescription.htmlText = data.wordDescription;
+				wc.lbType.text = passThru.type;
+				
+				switch(passThru.type){
+					case "n":
+						wc.lbType.text = "noun";
+						break;
+					case "a":
+						wc.lbType.text = "adj";
+						break;
+					case "v":
+						wc.lbType.text = "verb";
+						break;
+				}
+				
+				wc.addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+				grCards.addElement(wc);
+				updateCardGroupWidth();
+			}
+			
+			private function removeCard(cardIndex:int):void {
+				grCards.removeElementAt(cardIndex);
+				updateCardGroupWidth();
+			}
+			
+			private function updateCardGroupWidth():void {
+				grCards.width = grCards.numElements*(grCards.gap + 120);
+			}
+			
+			private function mouseDownHandler(e:MouseEvent):void {
+				DragManager.doDrag(e.currentTarget as IUIComponent, null, e);
+			}
+			
+			private function dragEnterHandler(e:DragEvent):void {
+				DragManager.acceptDragDrop(e.currentTarget as IUIComponent);
+			}
+			
+			private function dragDropHandler(e:DragEvent):void {
+				var lbl:Label = new Label();
+				var card:WordCard = e.dragInitiator as WordCard;
+				lbl.text = card.lbWord.text;
+				lbl.addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+				pnlWords.addElement(lbl);
+				updateTitleDisplay();
+			}
+			
+			private function garbageDropHandler(evt:DragEvent):void {
+				
+				var tgt:DisplayObject;
+				if(evt.dragInitiator is WordCard){
+					tgt = evt.dragInitiator as DisplayObject;
+					removeCard(grCards.getChildIndex(tgt));
+				}else{
+					var tgt2:Label = evt.dragInitiator as Label;
+					pnlWords.removeElementAt(pnlWords.getElementIndex(tgt2));
+					updateTitleDisplay();
+				}
+			}
+			
+			protected function updateTitleDisplay():void {
+				var prevWord:Label = pnlWords.getElementAt(0) as Label;
+				prevWord.x = 3;
+				prevWord.y = 3;
+				
+				var l:uint = pnlWords.numElements;
+				for(var i:uint = 1; i<l; i++)
+				{
+					var lbl:Label = pnlWords.getElementAt(i) as Label;
+					lbl.x = prevWord.x + prevWord.width + 3;
+					lbl.y = 3;
+					prevWord = lbl;
+				}
+			}
+			
+			protected function btSubmitProduct_clickHandler(event:MouseEvent):void {				
+				var l:uint = pnlWords.numElements;
+				if(l == 0){
+					Alert.show("You must add words before submitting your product. Drag words to the area in the center of the app.");
+					return;
+				}
+				
+				if(txSalesPitch.text == ""){
+					Alert.show("You must write something for your sales pitch.");
+					return;
+				}
+				
+				var vars:Object = {productString:""};
+				var last:uint = l - 1;
+				for(var i:uint = 0; i<l; i++){
+					var lbl:Label = pnlWords.getElementAt(i) as Label;
+					vars.productString = vars.productString + lbl.text;
+					if(i != last){
+						vars.productString = vars.productString + ",";
+					}
+				}
+				
+				var salesPitch:String = txSalesPitch.htmlText;
+				
+				while(salesPitch.indexOf("&") >= 0){
+					salesPitch = salesPitch.replace("&", "[amp]")
+				}
+				
+				vars.salesPitch = salesPitch;
+				
+				//vars.user_id = User.id;
+				//vars.oauth_token = User.oauth_token;
+				
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.SUBMIT_PRODUCT, vars, onSubmitProductComplete, true);
+			}
+			
+			protected function onSubmitProductComplete(data:Object, passThru:Object):void {
+				this.txSalesPitch.text = "";
+				this.pnlWords.removeAllElements();
+			}
+			
+			public function removeLinkInput():void {
+				txSalesPitch.toolbar.removeChild(txSalesPitch.linkTextInput);
+			}
+			
+			protected function handleAddedToStage():void
+			{
+				var shadow:DropShadowFilter = new DropShadowFilter();
+				shadow.distance = 6;
+				shadow.alpha = .4;
+				//shadow.angle = 25;
+				btDrawNoun.filters = [shadow];
+				btDrawAdjective.filters = [shadow];
+				btDrawVerb.filters = [shadow];
+				
+				var tutorialScheme:Object = {delay:-1}
+				tutorialScheme.itemList = new Array(
+					{target:btDrawAdjective, text:"First click these buttons until you've got " + User.getInstance().wordHandMax + " words."},
+					{target:mcGarbage, text:"Drag unwanted words here. You can discard and draw as many times as you'd like."},
+					{x:250, y:250, text:"Think of a funny way to combine these words, then drag them here."},
+					{target:mcGarbage, text:"If you make a mistake, drag your unwanted word here."},
+					{x:360, y:400, text:"Describe your idea here. If you can't make it funny, at least make it insane."},
+					{x:340, y:510, text:"Add your fancy-pants text formatting here."},
+					{target:btSubmitProduct, text:"Click here when you're ready to create whatever it is you created."}
+				);
+				
+				TutorialManager.getInstance().addSequence(tutorialScheme, "productBuilder");
+				
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Scroller id="scCards" left="7" top="5" width="726" height="192"
+				horizontalCenter="0" textAlign="center">
+		<s:VGroup width="100%" height="100%">
+			<s:HGroup id="grCards" width="605" height="169">
+			</s:HGroup>
+		</s:VGroup>
+	</s:Scroller>
+	<s:Button id="btDrawNoun" x="534" y="205" width="100" label="Draw Noun"
+			  click="drawCard('n')"/>
+	<s:Button id="btDrawAdjective" x="534" y="242" width="100" label="Draw Adjective"
+			  click="drawCard('a')"/>
+	<s:Button id="btDrawVerb" x="534" y="281" width="100" label="Draw Verb"
+			  click="drawCard('v')" />
+	<s:Panel id="pnlWords" x="3" y="205" width="514" height="98"
+			 dragDrop="dragDropHandler(event);" dragEnter="dragEnterHandler(event);"
+			 dropShadowVisible="true" fontFamily="Arial" fontSize="14"
+			 skinClass="spark.skins.spark.PanelSkin"
+			 title="Drag word cards here to create your product">
+	</s:Panel>
+	
+	<s:Panel id="mcGarbage" x="650" y="205" width="86" height="70" dropShadowVisible="true"
+			 dragDrop="garbageDropHandler(event);" dragEnter="dragEnterHandler(event);" fontSize="16" title="Garbage">
+	</s:Panel>
+	<mx:RichTextEditor id="txSalesPitch" x="3" y="311" width="614" height="225"
+					   creationComplete="removeLinkInput()" dropShadowVisible="true"
+					   fontSize="14" textAlign="left" title="Type your hilarious sales pitch here:"/>
+	<s:Button id="btSubmitProduct" x="456" y="496" width="152" height="32"
+			  label="Invent Product!" click="btSubmitProduct_clickHandler(event)"
+			  fontSize="19"/>
+</s:Group>

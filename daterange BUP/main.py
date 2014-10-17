@@ -1,0 +1,220 @@
+import os
+import cgi
+import logging
+import md5
+import base64
+import utils
+import urllib
+
+from datetime import datetime
+from google.appengine.ext import db
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp import template
+from google.appengine.ext.webapp.util import run_wsgi_app
+from google.appengine.api import memcache
+
+class Daterange(db.Model):
+    rangeID = db.StringProperty()
+    client = db.StringProperty()
+    campaign = db.StringProperty()
+    banner = db.StringProperty()
+    startDate = db.DateTimeProperty()
+    endDate = db.DateTimeProperty()
+    creationDate = db.DateTimeProperty(auto_now_add = True)
+    querryCount = db.IntegerProperty(default=0)
+
+class CustomField(db.Model):
+    fieldID = db.StringProperty()
+    client = db.StringProperty()
+    campaign = db.StringProperty()
+    banner = db.StringProperty()
+    fieldName = db.StringProperty()
+    fieldValue = db.StringProperty()
+    creationDate = db.DateTimeProperty(auto_now_add = True)
+    querryCount = db.IntegerProperty(default=0)
+    
+class MainPage(webapp.RequestHandler):
+    def get(self):
+        dateranges = db.GqlQuery("SELECT * FROM Daterange ORDER BY client ASC LIMIT 100")
+        customFields = db.GqlQuery("SELECT * FROM CustomField ORDER BY client ASC LIMIT 100")
+        template_values = {'dateranges':dateranges, 'customFields':customFields}
+        path = os.path.join(os.path.dirname(__file__), 'admin/salesworld_admin.html')
+        self.response.out.write(template.render(path, template_values))
+
+class SubmitDateRange(webapp.RequestHandler):
+    def post(self):
+	memcache.delete("multiResults")
+        fID = self.request.get('fieldID')
+        if fID == 'new':
+            idHash = md5.new()
+            idHash.update(self.request.get('client')+self.request.get('campaign')+self.request.get('banner')+self.request.get('startdate')+self.request.get('enddate'))
+            idValue = idHash.hexdigest()
+            daterange = Daterange()
+            daterange.rangeID = idValue
+            daterange.client = self.request.get('client')
+            daterange.campaign = self.request.get('campaign')
+            daterange.banner = self.request.get('banner')
+            daterange.startDate = datetime.strptime(self.request.get('startdate'), "%Y-%m-%d %H:%M:%S")
+            daterange.endDate = datetime.strptime(self.request.get('enddate'), "%Y-%m-%d %H:%M:%S")
+            daterange.put()
+            self.redirect('/')
+        else:
+            dateQuery = Daterange.all()
+            dateQuery.filter('rangeID =', fID)
+            results = dateQuery.fetch(limit=1)
+            for daterange in results:
+                _daterange = daterange
+            _daterange.startDate = datetime.strptime(self.request.get('startdate'), "%Y-%m-%d %H:%M:%S")
+            _daterange.endDate = datetime.strptime(self.request.get('enddate'), "%Y-%m-%d %H:%M:%S")
+            _daterange.put()
+            self.redirect('/')
+
+class SubmitCustomField(webapp.RequestHandler):
+    def post(self):
+	memcache.delete("multiResults")
+        fID = self.request.get('cusFieldID')
+        if fID == 'new':
+            idHash = md5.new()
+            idHash.update(self.request.get('cusClient') + self.request.get('cusCampaign') + self.request.get('cusBanner') + self.request.get('fieldName') + self.request.get('fieldValue'))
+            idValue = idHash.hexdigest()
+            customField = CustomField()
+            customField.fieldID = idValue
+            customField.client = self.request.get('cusClient')
+            customField.campaign = self.request.get('cusCampaign')
+            customField.banner = self.request.get('cusBanner')
+            customField.fieldName = self.request.get('fieldName')
+            customField.fieldValue = self.request.get('fieldValue')
+            customField.put()
+            self.redirect('/')
+        else:
+            customFieldQuery = CustomField.all()
+            customFieldQuery.filter('fieldID =', fID)
+            results = customFieldQuery.fetch(limit=1)
+            for customField in results:
+                _customField = customField
+            _customField.fieldName = self.request.get('fieldName')
+            _customField.fieldValue = self.request.get('fieldValue')
+            _customField.put()
+            self.redirect('/')
+
+class GetCustomField(webapp.RequestHandler):
+    def get(self, bID):
+        fieldQuery = CustomField.all()
+        fieldQuery.filter('fieldID =', bID)
+        results = fieldQuery.fetch(limit=1)
+        for customField in results:
+            customField.querryCount += 1
+            customField.put()
+        self.response.headers['Content-Type'] = "application/json"
+        self.response.out.write(utils.GqlEncoder().encode(results))       
+        
+class GetBannerCustomFields(webapp.RequestHandler):
+    def get(self, bID):
+        fieldQuery = CustomField.all()
+        fieldQuery.filter('fieldID =', bID)
+        results = fieldQuery.fetch(limit=10)
+        outputString = ""
+        for customField in results:
+            customField.querryCount += 1
+            customField.put()
+            outputDictionary = {customField.fieldName:customField.fieldValue}
+        self.response.headers['Content-Type'] = "application/json"
+        self.response.out.write(utils.GqlEncoder().encode(outputDictionary))       
+        
+class GetDateRange(webapp.RequestHandler):
+    def get(self):
+        dateranges = db.GqlQuery("SELECT * FROM Daterange ORDER BY client ASC LIMIT 100")
+        customFields = db.GqlQuery("SELECT * FROM CustomField ORDER BY client ASC LIMIT 100")
+        template_values = {'dateranges':dateranges, 'customFields':customFields}
+        path = os.path.join(os.path.dirname(__file__), 'admin/salesworld_admin.html')
+        self.response.out.write(template.render(path, template_values))
+        
+class GetBannerDateRange(webapp.RequestHandler):
+    def get(self, bID):
+        dateQuery = db.GqlQuery("SELECT * FROM Daterange WHERE rangeID = '" + bID + "'")
+        results = dateQuery.fetch(limit=10)
+        for daterange in results:
+            daterange.querryCount += 1
+            daterange.put()
+            #Create Dictionary object for JSON serialization
+            outputDictionary = {'sD':str(daterange.startDate), 'eD':str(daterange.endDate)}
+        self.response.headers['Content-Type'] = "application/json"
+        self.response.out.write(utils.GqlEncoder().encode(outputDictionary))    
+
+class CallDeleteDate(webapp.RequestHandler):
+    def get(self):
+        dateQuery = Daterange.all()
+        bID = self.request.get('delRangeID')
+        dateQuery.filter('rangeID =', bID)
+        results = dateQuery.fetch(limit=1)
+        for daterange in results:
+            daterange.delete()
+        self.redirect('/')
+        
+class CallDeleteCustom(webapp.RequestHandler):
+    def get(self):
+        customQuery = CustomField.all()
+        bID = self.request.get('delFieldID')
+        customQuery.filter('fieldID =', bID)
+        results = customQuery.fetch(limit=1)
+        for customField in results:
+            customField.delete()
+        self.redirect('/')
+       
+#EXAMPLE: http://localhost:8080/getMultiIds/date-81fac69c3cef75bca18efc7bce7f6587|date-5e371a23d9bc63a094f72cf4d20e459c|custom-7f98bf56a60ad0efc3512a58b44da096|custom-40827340558a27d345ff4f1867c81cfb
+class getMultiIds(webapp.RequestHandler):
+	def get(self, ids):
+		parts = urllib.unquote(ids).split('|')	
+		self.response.headers['content-type'] = 'text/plain'
+		customObject = memcache.get("multiResults")
+		if customObject is None:
+			customObject = {}
+			fieldQuery = CustomField.all()
+			results = fieldQuery.fetch(limit=10)
+			for customField in results:
+        			customObject[customField.fieldID] = { 'fieldName':str(customField.fieldName), 'fieldValue':str(customField.fieldValue) }
+				customField.querryCount += 1
+            			customField.put()
+			dateQuery = Daterange.all()
+        		dateResults = dateQuery.fetch(limit=10)
+			for date in dateResults:
+        			customObject[date.rangeID] = {'sd':str(date.startDate), 'ed':str(date.endDate)}
+				date.querryCount += 1
+            			date.put()
+			if not memcache.add("multiResults", customObject):
+            			logging.error("Memcache set failed.")
+		#else:
+		#	self.response.out.write("using memcache")
+		outputDictionary = {}
+		dateArr = []
+		outputCustomObject = {}
+		for id in parts:
+			if id[0:6] == 'custom':
+				fieldID = id[7:40]
+				outputCustomObject[customObject[fieldID]['fieldName']] = customObject[fieldID]['fieldValue']
+			else:
+				dateID = id[5:38]
+        			dateArr.append( customObject[dateID] )
+		outputDictionary['customFields'] = outputCustomObject
+		outputDictionary['dates'] = dateArr
+		self.response.out.write(utils.GqlEncoder().encode(outputDictionary))
+				
+  
+      
+application = webapp.WSGIApplication([('/', MainPage),
+                                       ('/addDates', SubmitDateRange),
+                                        ('/getDates/(.*)', GetDateRange),
+                                            ('/addFields', SubmitCustomField),
+                                                ('/getCustomField/(.*)', GetCustomField),
+                                                    ('/deleteDate', CallDeleteDate),
+                                                        ('/deleteCustom', CallDeleteCustom),
+                                                            ('/getBannerDates/(.*)', GetBannerDateRange),
+                                                                ('/getBannerCustomFields/(.*)', GetBannerCustomFields),
+                                                                	('/getMultiIds/(.*)', getMultiIds)],
+                                      debug=True)
+
+def main():
+    run_wsgi_app(application)
+
+if __name__ == "__main__":
+    main()

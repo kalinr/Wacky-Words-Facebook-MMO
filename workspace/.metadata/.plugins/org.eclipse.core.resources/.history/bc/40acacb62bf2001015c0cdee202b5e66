@@ -1,0 +1,7 @@
+cron:
+- description: DailyStats MapReduce
+  url: /cron_mapreduce?name=dailyUserUpdates&reader_spec=main.dailyUserUpdate&entity_kind=main.User
+  schedule: every 24 hours
+- description: Weekly stats MapReduce
+  url: /cron_mapreduce?name=weeklyUserUpdates&reader_spec=main.weeklyUserUpdate&entity_kind=main.User
+  schedule: every 24 hours

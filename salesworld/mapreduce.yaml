@@ -1,0 +1,8 @@
+mapreduce:
+- name: user stats daily update
+  mapper:
+    input_reader: mapreduce.input_readers.DatastoreInputReader
+    handler: main.process
+    params:
+    - name: entity_kind
+      default: main.User

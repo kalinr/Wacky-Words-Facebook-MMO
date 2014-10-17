@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600">
+	
+	<fx:Script>
+		<![CDATA[
+			
+			/*import flash.events.*;
+			import flash.net.*;
+			import flash.net.URLVariables;*/
+			
+			import mx.controls.Alert;
+			
+			//private var request:URLRequest;
+			//private var loader:URLLoader;
+			
+			protected function btnSubmitWordCard_clickHandler(event:MouseEvent):void
+			{
+				/*request = new URLRequest("/submitWordCard");
+				loader = new URLLoader();
+				//loader.dataFormat = URLLoaderDataFormat.TEXT;
+				
+				request.method = URLRequestMethod.POST;  
+				var variables : URLVariables = new URLVariables();  
+				variables.wordString = txtWordString.text;
+				variables.wordType = radioWordType.selectedValue;
+				if(this.chkRichText.selected){
+					variables.wordDescription = txDescription.htmlText;
+				}else{
+					variables.wordDescription = txDescription.text;
+				}
+				
+				
+				//Alert.show(variables.wordString + "a nd " + variables.wordType);
+				
+				request.data = variables;
+				
+				loader.addEventListener(Event.COMPLETE, handleComplete);
+				loader.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecError);
+				loader.load(request);
+				*/
+				
+				var vars:Object = {};
+				vars.wordString = txtWordString.text;
+				vars.wordType = radioWordType.selectedValue;
+				if(this.chkRichText.selected){
+					vars.wordDescription = txDescription.htmlText;
+				}else{
+					vars.wordDescription = txDescription.text;
+				}
+				
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.SUBMIT_WORD_CARD, vars, handleComplete, false);
+			}
+			
+			private function handleComplete(data:Object, passThru:Object):void {
+				
+				txtWordString.text = "";
+				txDescription.text = "";
+				chkRichText.selected = false;	
+				txtWordString.setFocus();
+				
+			}
+			/*private function onIOError(event:IOErrorEvent):void {
+				Alert.show("Error!!!!!!" + event.text);
+			}
+			
+			private function onSecError(event:Event):void {
+				Alert.show("Security Error!!!!!!");
+				
+				btnSubmitWordCard.visible = false;
+			}*/
+			
+			
+			
+			protected function btGenerateCode_clickHandler(event:MouseEvent):void
+			{
+				var startValue:uint = this.stpXPStart.value;
+				var ratio:Number = this.stpXPRatio.value;
+				var maxLevel:uint = this.stpMaxLevel.value;
+				
+				var pythonOutput:String = "";
+				var JSONOutput:String = "[";
+				
+				for(var i:uint = 0; i<maxLevel; i++){
+					var xp:uint = Math.round(startValue*(Math.pow(1+i, ratio)));
+					JSONOutput += " " + xp + ","
+				}
+				
+				JSONOutput = JSONOutput.substr(0, JSONOutput.length - 1);//remove trailing comma
+				
+				JSONOutput += "]";
+				
+				this.txJsonOutput.text = JSONOutput;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:RadioButtonGroup id="radioWordType"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Button id="btnSubmitWordCard" x="263" y="189" label="Submit Word"
+			  click="btnSubmitWordCard_clickHandler(event)"/>
+	<s:VGroup x="263" y="75">
+		<s:RadioButton label="Noun" groupName="radioWordType" selected="true" value="n"/>
+		<s:RadioButton label="Verb" groupName="radioWordType" value="v"/>
+		<s:RadioButton label="Adjective" groupName="radioWordType" value="a"/>
+	</s:VGroup>
+	<s:TextInput id="txtWordString" x="10" y="68" width="178" prompt="word text"/>
+	<mx:RichTextEditor id="txDescription" x="10" y="101" width="225" height="202"
+					   dropShadowVisible="true" fontSize="14" textAlign="left"
+					   title="word description:"/>
+	<s:CheckBox id="chkRichText" x="261" y="160" width="111"
+				label="Has Rich Text"/>
+	<mx:VRule x="409" y="10" width="4" height="580"/>
+	<s:TextArea id="txJsonOutput" x="11" y="486" width="390" height="104" editable="false"
+				prompt="JSON Level XP Output"/>
+	<s:NumericStepper id="stpXPStart" x="10" y="456" width="79" maximum="10000" minimum="10"
+					  stepSize="10"/>
+	<s:Label x="10" y="441" text="Starting Value:"/>
+	<s:NumericStepper id="stpXPRatio" x="106" y="456" width="79" maximum="30" minimum=".1"
+					  stepSize=".1"/>
+	<s:Label x="106" y="441" text="Increase ratio:"/>
+	<s:Button id="btGenerateCode" x="294" y="456" label="Generate Code"
+			  click="btGenerateCode_clickHandler(event)"/>
+	<mx:HRule x="10" y="355" width="391"/>
+	<s:Label x="10" y="401" width="344" height="24" fontSize="20"
+			 text="Generate Experience Leveling Arrays:"/>
+	<s:NumericStepper id="stpMaxLevel" x="200" y="456" width="79" maximum="1000" minimum="2"
+					  stepSize="1"/>
+	<s:Label x="200" y="441" text="Max Level:"/>
+	<mx:VRule x="97" y="443" height="33"/>
+	<mx:VRule x="192" y="443" height="33"/>
+	<s:Label x="10" y="14" width="344" height="24" fontSize="30"
+			 text="Add Words:"/>
+</s:Application>

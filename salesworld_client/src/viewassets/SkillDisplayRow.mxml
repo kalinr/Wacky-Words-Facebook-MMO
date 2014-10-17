@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="740" height="60">
+	
+	<fx:Script>
+		<![CDATA[
+			
+			public var skillField:String = "";//the name of the skill we're currently representing in this instance
+			public var nextLevelDiff:int = 0;
+			public var skillName:String = "";
+			public var userLevel:int = 0;
+			public var skillTypeObj:Object;
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<s:BorderContainer id="mcProgressBar" x="63" y="33" width="264" height="20"
+					   backgroundAlpha="0.55" backgroundColor="#CDCDCD">
+	</s:BorderContainer>
+	<s:Label id="txSkillName" x="64" y="9" width="263" height="18" fontSize="17"
+			 text="Literary Sandbagging" textAlign="left"/>
+	<s:TextArea id="txDescription" x="338" y="10" width="277" height="40"
+				text="Draw one extra word per day per level."/>
+	<mx:VRule x="59" y="10" height="40"/>
+	<s:Label x="3" y="9" width="52" fontSize="18" text="Level:" textAlign="center"/>
+	<s:Label id="txLevel" x="3" y="32" width="52" fontSize="20" text="6/26" textAlign="center"/>
+	<mx:HRule x="65" y="27" width="264"/>
+	<mx:HRule x="40" y="58" width="650"/>
+	<mx:VRule x="333" y="10" height="40"/>
+	<s:Label id="txNextLevelSP" x="76" y="38" width="108" height="15" text="Next Level: 6548"
+			 textAlign="center"/>
+	<s:Button id="btnBuy" x="626" y="19" label="Buy!" fontSize="15"/>
+	
+</s:Group>

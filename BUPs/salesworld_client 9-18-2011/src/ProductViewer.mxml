@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 addedToStage="handleAddedToStage()"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="740" height="460">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>	
+	<fx:Script>
+		<![CDATA[
+			
+			import mx.controls.Alert;
+			
+			private var cachedProducts:Array = new Array();
+			private var cachedProductIndex:uint = 0
+			
+			protected function handleAddedToStage():void {
+				getRandomProduct();
+			}
+			
+			protected function getRandomProduct():void {
+				var vars:Object = {count:1, order:"rand"}
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.GET_PRODUCT, vars, onGetProductComplete);
+			}
+			
+			protected function onGetProductComplete(data:Object, passThru:Object):void {
+				cachedProducts.push(data);
+				showProduct(cachedProducts.length - 1);
+			}
+			
+			protected function showProduct(index:uint):void {
+				cachedProductIndex = index;
+				txSalesPitch.htmlText = cachedProducts[index].salesPitch;
+				txProductTitle.text = cachedProducts[index].productString;
+				if(cachedProductIndex > 0){
+					btnPrev.enabled = true;
+				}else{
+					btnPrev.enabled = false;
+				}
+			}
+			
+			protected function btnNext_clickHandler(event:MouseEvent):void {
+				if(cachedProductIndex == cachedProducts.length - 1){
+					getRandomProduct();	
+				}else{
+					showProduct(cachedProductIndex + 1);
+				}
+			}
+			
+			protected function btnPrev_clickHandler(event:MouseEvent):void {
+				showProduct(cachedProductIndex - 1);
+			}
+			
+		]]>
+	</fx:Script>
+		
+
+	
+	<s:Button id="btnNext" x="627" y="120" width="108" label="Next Product &gt;&gt;"
+			  click="btnNext_clickHandler(event)"/>
+	<s:Label id="txProductTitle" x="10" y="39" width="720" height="69" fontSize="26" text="Label" textAlign="center"/>
+	<s:Button id="btnPrev" x="4" y="120" width="108" label="&lt;&lt; Previous"
+			  click="btnPrev_clickHandler(event)"/>
+	<s:Button id="btnVoteUp" x="120" y="318" label="Vote Up" enabled="false"/>
+	<s:Button id="btnVoteDown" x="540" y="318" label="Vote Down" enabled="false"/>
+	<s:Button id="btnInvest" x="335" y="318" label="Invest" enabled="false"/>
+	<s:RichText id="txProductInfo" x="120" y="298" width="499" text="username invented this on date"/>
+	<mx:Text id="txSalesPitch" x="120" y="120" width="499"></mx:Text>
+</s:Group>

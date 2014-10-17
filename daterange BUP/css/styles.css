@@ -1,0 +1,55 @@
+body {
+  font-family: Helvetica, Verdana, sans-serif;
+  background-color: #DDDDDD;
+}
+
+table td{
+font-size:12px;
+}
+
+.tableDiv{
+	width:1005px;
+	border: 2px solid #666;
+	margin-left: 10px;
+	margin-top:15px;
+	padding: 10px;	
+}
+
+.formDiv{
+	float:left;
+	width:485px;
+	height:260px;
+	border: 2px solid #666;
+	margin-left: 10px;
+	margin-top:15;
+	padding: 10px;
+}
+
+.formDivInternal{
+	margin: 10px;
+}
+
+.dateFormElement{
+	position:absolute;
+	left: 140px;
+}
+
+.customFormElement{
+	position:absolute;
+	left: 660px;
+}
+
+.helpPopup{
+	position:fixed;
+	top: 30;
+	left:265;
+	width: 500;
+	
+	visibility:hidden;
+}
+
+.helpShadow{
+	border: 2px solid #666;
+	background-color:#CCC;
+	padding:25px;
+}

@@ -1,0 +1,5 @@
+
+cron:
+  - description: DailyStats MapReduce
+url: /cron_mapreduce?name=process&reader_spec=main.process&entity_kind=main.User
+  schedule: every 24 hours

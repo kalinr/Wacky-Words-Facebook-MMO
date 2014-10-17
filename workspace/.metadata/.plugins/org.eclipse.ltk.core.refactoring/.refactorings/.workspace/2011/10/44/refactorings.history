@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Delete resource &apos;salesWorld/index.yaml&apos;" deleteContents="false" description="Delete resource &apos;salesWorld/index.yaml&apos;" element1="/salesWorld/index.yaml" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1319686383006"/>&#x0A;<refactoring comment="Delete resource &apos;salesWorld/cron.yaml&apos;" deleteContents="false" description="Delete resource &apos;salesWorld/cron.yaml&apos;" element1="/salesWorld/cron.yaml" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1319687890046"/>
+</session>

@@ -1,0 +1,44 @@
+application: inventionsalesworld
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /submitWordCard/.*
+  script: admin.py
+  login: admin
+  
+- url: /adminPage/.*
+  script: admin.py
+  
+- url: /drawCard/.*
+  script: main.py
+    
+- url: /submitProduct/.*
+  script: main.py
+  
+- url: /getProduct/.*
+  script: main.py
+  
+- url: /productVote/.*
+  script: main.py
+  
+- url: /mapreduce(/.*)?
+  script: mapreduce/main.py
+  login: admin
+  
+- url: /cron_mapreduce.*
+  script: /cron_mapreduce.py
+  login: admin
+
+- url: /admin
+  static_dir: admin
+  
+- url: /client
+  static_dir: client
+  
+- url: /stats.*
+  script: $PYTHON_LIB/google/appengine/ext/appstats/ui.py
+    
+- url: /.*
+  script: main.py

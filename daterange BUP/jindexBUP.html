@@ -1,0 +1,251 @@
+<html>
+<head>
+    <link type='text/css' rel='stylesheet' href='/css/styles.css' />
+    <link type='text/css' rel='stylesheet' href='/css/anytime.css' />
+    <script type='text/javascript' src='/js/jquery.js' ></script>
+    <script type='text/javascript' src='/js/jquery.dropshadow.js' ></script>
+    <script type='text/javascript' src='/js/anytime.js' ></script>
+    <script src='js/swfobject_modified.js' type='text/javascript'></script>
+    <script type='text/javascript'>
+    $(document).ready(function(){
+        AnyTime.widget('startdate',{format:'%Y-%m-%d %T'});
+        AnyTime.widget('enddate', {format:'%Y-%m-%d %T'});
+              
+        //Array of objects for each banner with rangeID as the index key
+        //usage: for all triggers, set the NAME attribute of the button to the rangeID and pass to this 
+        //array to capture values
+        var dateBanners = new Array();
+        {% for daterange in dateranges %} 
+        dateBanners['{{daterange.rangeID}}'] = {
+                                            'hits':'{{daterange.querryCount|escape}}',
+                                            'client':'{{daterange.client|escape}}',
+                                            'campaign':'{{daterange.campaign|escape}}',
+                                            'banner':'{{daterange.banner}}',
+                                            'startDate':'{{daterange.startDate}}',
+                                            'endDate':'{{daterange.endDate}}',
+                                            'id':'{{daterange.rangeID}}'
+                                           }
+        {% endfor %}
+             
+        var customFieldBanners = new Array();
+        {% for customField in customFields %}     
+        customFieldBanners['{{customField.fieldID|escape}}'] = { 
+                                                                'hits':'{{customField.querryCount|escape}}',
+                                                                'client':'{{customField.client|escape}}',
+                                                                'campaign':'{{customField.campaign|escape}}',
+                                                                'banner':'{{customField.banner}}',
+                                                                'fieldName':'{{customField.fieldName}}',
+                                                                'fieldValue':'{{customField.fieldValue}}',
+                                                                'id':'{{customField.fieldID}}'
+                                                               };        
+                
+        {% endfor %}       
+        
+        //jquery version of selectBanner function, attached to selectDateBannerButton CLASS (.)
+        $('.selectDateBannerButton').click(function(){
+            var id = $(this).attr('name');
+            $('#client').val(dateBanners[id].client);
+            $('#campaign').val(dateBanners[id].campaign); 
+            $('#banner').val(dateBanners[id].banner);
+            $('#startdate').val(dateBanners[id].startDate);
+            $('#enddate').val(dateBanners[id].endDate); 
+            $('.clear_tr').css('background-color', '#dddddd');
+            $('#tr_'+id).css('background-color','#ffffff');                 
+        });
+        
+        $('.selectCustomBannerButton').click(function(){
+            var id = $(this).attr('name');
+            $('#cusClient').val(customFieldBanners[id].client);
+            $('#cusCampaign').val(customFieldBanners[id].campaign); 
+            $('#cusBanner').val(customFieldBanners[id].banner);
+            $('#fieldName').val(customFieldBanners[id].fieldName);
+            $('#fieldValue').val(customFieldBanners[id].fieldValue); 
+            $('.clear_tr').css('background-color', '#dddddd');
+            $('#tr_'+id).css('background-color','#ffffff'); 
+        });
+        
+        $('.updateDateButton').click(function(){
+            var id = $(this).attr('name');
+            $('#client').val(dateBanners[id].client);
+            $('#campaign').val(dateBanners[id].campaign); 
+            $('#banner').val(dateBanners[id].banner);
+<<<<<<< .mine
+			$('#fieldID').val(id);
+			
+			$('#daterangeHeader').html('<p>Update date range for: ' + id + '</p>');
+=======
+            $('#fieldID').val(dateBanners[id].id);
+            
+            $('#daterangeHeader').html('<p>Update date range for: ' + id + '</p>');
+>>>>>>> .r47
+        });
+        
+        $('.updateCustomButton').click(function(){
+            var id = $(this).attr('name');
+            $('#cusClient').val(customFieldBanners[id].client);
+            $('#cusCampaign').val(customFieldBanners[id].campaign); 
+            $('#cusBanner').val(customFieldBanners[id].banner);
+<<<<<<< .mine
+			$('#cusFieldID').val(id);
+			
+			$('#customHeader').html('<p>Update custom field for: ' + id + '</p>');
+=======
+            $('#cusFieldID').val(customFieldBanners[id].id);
+            
+            $('#customHeader').html('<p>Update custom field for: ' + id + '</p>');
+>>>>>>> .r47
+        });
+        
+        //jquery help panel function attached to helpButton CLASS (.)
+        $('.helpButton').click(function(){
+            var node = $(this).attr('name');
+            $.ajax({type:'GET', dataType:'xml',url:'js/help.xml',
+                    success:function(xml){
+                        var helpString = $(xml).find(node).text();
+                        $('#helpPopupInternal').html(helpString);
+                        $('#helpPopup').css('visibility', 'visible');  
+                        $('#helpShadow').removeShadow();  
+                        $('#helpShadow').dropShadow();              
+                    },
+                    error:function(error){
+                        alert(error);
+                    }                   
+                  });
+        });
+        
+        $('#clearCustom').click(function(){
+            $('#cusClient').val('');
+            $('#cusCampaign').val(''); 
+            $('#cusBanner').val('');
+            $('#cusFieldID').val('new');
+            $('#fieldName').val('');
+            $('#fieldValue').val('');
+            
+            $('#customHeader').html('<p>new custom field:</p>');
+        });
+        
+        $('#clearDateRange').click(function(){
+            $('#client').val('');
+            $('#campaign').val(''); 
+            $('#banner').val('');
+            $('#fieldID').val('new');
+            $('#startdate').val('');
+            $('#enddate').val('');
+            
+            $('#daterangeHeader').html('<p>new date range:</p>');
+        });
+        
+        //jquery close help panel function attached to closeHelp ID (#)
+        $('#closeHelp').click(function(){
+            $('#helpPopup').css('visibility', 'hidden');
+        });
+        
+        $('#fieldDatePicker').click(function(){
+            AnyTime.widget('fieldValue',{format:'%Y-%m-%d %T'});                                 
+        });
+    }); //END JQUERY BLOCK
+    
+    </script>
+</head>
+<body>
+<div class='tableDiv'>
+    <form>Date Ranges: <input type='button' value='Help' class='helpButton' name='date_range_table'></form>
+    <table width='1000' border='1' cellspacing='1' cellpadding='3'>
+        <tr>
+            <th scope='col'>hits</th>
+            <th scope='col'>client</th>
+            <th scope='col'>campaign</th>
+            <th scope='col'>banner</th>
+            <th scope='col'>start date</th>
+            <th scope='col'>end date</th>
+            <th scope='col'>ID</th>
+            <th scope='col'>select</th>
+            <th scope='col'>delete</th>
+            <th scope='col'>update</th>
+        </tr>
+    {% for daterange in dateranges %}  
+        <tr id='tr_{{daterange.rangeID|escape}}' class='clear_tr'>
+            <td>{{ daterange.querryCount|escape }}</td>
+            <td>{{ daterange.client|escape }}</td>
+            <td>{{ daterange.campaign|escape }}</td>
+            <td>{{ daterange.banner|escape }}</td>
+            <td>{{ daterange.startDate|escape }}</td>
+            <td>{{ daterange.endDate|escape }}</td>
+            <td><a href='/getBannerDates/{{daterange.rangeID|escape}}' target='_blank'>{{ daterange.rangeID|escape }}</a></td>
+            <td><input type='button' value='Select' class='selectDateBannerButton' name='{{daterange.rangeID|escape}}'></td>
+            <td><form action='/deleteDate' method='get'><input type='hidden' name='delRangeID' value='{{ daterange.rangeID|escape }}'><input type='submit' value='Delete'></form></td>
+            <td><input type='button' value='Update' class='updateDateButton' name='{{daterange.rangeID|escape}}'/></td>
+        </tr>
+    {% endfor %}
+    </table>
+    </div>
+    <div class='tableDiv'>
+    Custom Fields: <input type='button' value='Help' class='helpButton' name='custom_field_table'>
+    <table width='1000' border='1' cellspacing='1' cellpadding='3'>
+        <tr>
+            <th scope='col'>hits</th>
+            <th scope='col'>client</th>
+            <th scope='col'>campaign</th>
+            <th scope='col'>banner</th>
+            <th scope='col'>field name</th>
+            <th scope='col'>field value</th>
+            <th scope='col'>ID</th>
+            <th scope='col'>select</th>
+            <th scope='col'>delete</th>
+            <th scope='col'>update</th>
+        </tr>
+    {% for customField in customFields %}  
+        <tr id='tr_{{customField.fieldID|escape}}' class='clear_tr'>
+            <td>{{ customField.querryCount|escape }}</td>
+            <td>{{ customField.client|escape }}</td>
+            <td>{{ customField.campaign|escape }}</td>
+            <td>{{ customField.banner|escape }}</td>
+            <td>{{ customField.fieldName|escape }}</td>
+            <td>{{ customField.fieldValue|escape }}</td>
+            <td><a href='/getBannerCustomFields/{{customField.fieldID|escape}}' target='_blank'>{{ customField.fieldID|escape }}</td>
+            <td><input type='button' value='Select' class='selectCustomBannerButton' name='{{customField.fieldID|escape}}'></td>
+            <td><form action='/deleteCustom' method='get'><input type='hidden' name='delFieldID' id='delFieldID' value='{{ customField.fieldID|escape }}'><input type='submit' value='Delete'></form></td>
+            <td><input type='button' value='Update' class='updateCustomButton' name='{{customField.fieldID|escape}}'></td>
+        </tr>
+    {% endfor %}
+    </table>
+    </div>
+    
+<div class='formDiv'>  
+    <div id='daterangeHeader'><p>new date range:</p></div>
+    <form name='dateRangeForm' action='/addDates' method='post'>
+        <div><p>client: <span class='dateFormElement'><textarea name='client' id='client' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>campaign: <span class='dateFormElement'><textarea name='campaign' id='campaign' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>banner: <span class='dateFormElement'><textarea name='banner' id='banner' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>start date: <span class='dateFormElement'><textarea name='startdate' id='startdate' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>end date: <span class='dateFormElement'><textarea name='enddate' id='enddate' rows='1' cols='32'></textarea></span></p></div>
+        <input type='hidden' name='fieldID' id='fieldID' value='new'>
+        <br/>
+        <div><input type='submit' value='Submit'>&nbsp;&nbsp;&nbsp;&nbsp;<input type='button' value='Clear' id='clearDateRange'>&nbsp;&nbsp;&nbsp;&nbsp;<input type='button' value='Help' class='helpButton' name='date_range_form'></div>
+    </form>
+</div>
+    
+  
+<div class='formDiv'>
+    <div id='customHeader'><p>new custom field:</p></div>
+    <form name='customFieldForm' action='/addFields' method='post'>
+        <div><p>client: <span class='customFormElement'><textarea name='cusClient' id='cusClient' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>campaign: <span class='customFormElement'><textarea name='cusCampaign' id='cusCampaign' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>banner: <span class='customFormElement'><textarea name='cusBanner' id='cusBanner' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>field name: <span class='customFormElement'><textarea name='fieldName' id='fieldName' rows='1' cols='32'></textarea></span></p></div>
+        <div><p>field value: <span class='customFormElement'><textarea name='fieldValue' id='fieldValue' rows='1' cols='32'></textarea>&nbsp;&nbsp;<input type='button' value='date picker' id='fieldDatePicker'></p></div><br/>
+        <input type='hidden' name='cusFieldID' id='cusFieldID' value='new'>
+        <div><input type='submit' value='Submit'>&nbsp;&nbsp;&nbsp;&nbsp;<input type='button' value='Clear' id='clearCustom'>&nbsp;&nbsp;&nbsp;&nbsp;<input type='button' value='Help' class='helpButton' name='custom_field_form'></div>
+    </form>
+    </div>
+    
+
+<div id='helpPopup' class='helpPopup'>
+    <div id='helpShadow' class='helpShadow'>
+        <div id='helpPopupInternal'></div><br/>
+        <input type='button' value='Close' id='closeHelp'>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   addedToStage="handleAddedToStage()"
+			   width="760" height="602" minWidth="760" minHeight="602" xmlns:local="*">
+	<fx:Script>
+		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			
+			import mx.controls.Alert;
+			
+			protected function handleAddedToStage():void {
+				
+				//Alert.show(this.root.loaderInfo.toString());
+				
+				var paramObj:Object = LoaderInfo(this.root.loaderInfo).parameters;
+				var usr:User = User.getInstance();
+				//Alert.show(paramObj.user_data + "huh?");
+				usr.inputValues(JSON.decode(paramObj.user_data));
+				
+				//User.addEventListener(
+				
+				this.txCash.text = "$" + User.getInstance().gold;
+				this.txLevel.text = "Level: " + User.getInstance().level;
+				
+				TutorialManager.getInstance().setParent(this);
+				ExperienceManager.getInstance().setParent(this);
+				
+				usr.addEventListener("levelUp", this.onUserLevelUp);
+			}
+			
+			protected function onUserLevelUp(evt:Event) : void {
+				this.txLevel.text = "Level: " + User.getInstance().level;
+			}
+			
+			protected function btStartTutorial_clickHandler(event:MouseEvent):void
+			{
+				var paramObj:Object = LoaderInfo(this.root.loaderInfo).parameters;
+				//Alert.show(paramObj.user_data + "huh?");
+				//Alert.show(this.root.loaderInfo.toString());
+				// TODO Auto-generated method stub
+				TutorialManager.getInstance().beginSequence(this.tabNav.selectedChild.name);
+				
+				//trace(this.tabNav.selectedChild, this.tabNav.selectedChild.name);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<mx:TabNavigator id="tabNav" x="10" y="10" width="742" height="580">
+		<s:NavigatorContent id="productViewer" width="100%" height="100%" label="Look At Stuff">
+			<local:ProductViewer width="740"></local:ProductViewer>
+		</s:NavigatorContent>
+		<s:NavigatorContent id="productBuilder" width="100%" height="100%" label="Invent Stuff">
+			<local:ProductBuilder width="740"></local:ProductBuilder>
+		</s:NavigatorContent>
+		<s:NavigatorContent id="skillMenu" width="100%" height="100%" label="Skillz">
+			<local:SkillMenu width="740"></local:SkillMenu>
+		</s:NavigatorContent>
+	</mx:TabNavigator>
+	<s:Label id="txCash" x="557" y="12" width="77" height="24" fontSize="20" text="$600"
+			 textAlign="left"/>
+	<s:Label id="txLevel" x="627" y="11" width="103" height="24" fontSize="20" text="Level: 1"
+			 textAlign="right"/>
+	<mx:LinkButton id="btStartTutorial" x="364" y="7" label="start tutorial"
+				   click="btStartTutorial_clickHandler(event)" fontSize="14"
+				   textDecoration="underline"/>
+</s:Application>
+
+<!--
+
+
+
+began project on 8/27/2011
+
+
+funny concepts:
+
+David Hasselhoff
+Pork and Beans
+bunny rabbits
+Mayonnaise
+Baconaise
+Bacon
+midgets
+fat people
+
+names:
+
+Wacky Word-Widget World
+World of Wacky Word Craft
+Wacky Word Widgets
+Product Sales World
+Wordcraft inventor
+-->

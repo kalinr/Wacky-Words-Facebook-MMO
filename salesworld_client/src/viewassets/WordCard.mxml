@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="120" height="160">
+	
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer x="0" y="0" width="120" height="160" backgroundColor="#F2F2F2"
+					   cornerRadius="6" dropShadowVisible="true">
+	</s:BorderContainer>
+	<s:Label id="lbWord" x="0" y="0" width="121" height="67" color="#3C3838" fontSize="18"
+			 fontWeight="bold" text="Label a;sld kjfalkdjf and" textAlign="center"
+			 verticalAlign="middle"/>
+	<s:Label id="lbType" x="86" y="140" width="32" height="18" backgroundColor="#D2D2D2" text="type"
+			 textAlign="center" verticalAlign="middle"/>
+	<!--<s:Label id="lbDescription" x="7" y="54" width="106" height="104"
+			 text="that ooie gooshy feeling you get inside" textAlign="center"
+			 verticalAlign="middle"/> -->
+	<mx:Text id="txDescription" x="7" y="62" width="106" height="114" enabled="true"
+			 text="Hello this is about the amount of text you can fit in this a area and it has to be some"
+			 textAlign="left" selectable="false"/>
+
+	
+	
+</s:Group>

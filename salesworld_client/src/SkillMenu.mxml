@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 addedToStage="handleAddedToStage()"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="740" height="545">
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			
+			import viewassets.SkillDisplayRow;
+			
+			private var skillRowClips:Array = new Array();
+			private var selectedSkillRow:SkillDisplayRow;
+			
+			protected function handleAddedToStage():void
+			{
+				//Alert.show("handling added to stage");
+				var usr:User = User.getInstance();
+				var l:uint = usr.skillTypes.length;
+				var prevSkillRow:SkillDisplayRow;
+				//Alert.show("handling added to 2 " + l);
+				for(var i:int = 0; i<l; i++){
+					var skillType:Object = usr.skillTypes[i];
+					//Alert.show(skillType.name + " name" + l);
+					var sr:SkillDisplayRow = skillRowClips[skillType.field] = new SkillDisplayRow();
+											
+					/*sr.userLevel = usr[skillType.field + "_lvl"];//usr.calculateLevel(usr.skillLevels, skillPoints);
+					sr.txLevel.text = sr.userLevel + "/" + skillType.max;
+					var skillDiff:int = usr.getNextSkillLevelDifference(skillType.field);
+					sr.txNextLevelSP.text = "Next Level: " + skillDiff;
+					sr.nextLevelDiff = skillDiff;*/
+					
+					sr.skillTypeObj = skillType;
+					sr.txDescription.text = skillType.description;
+					sr.txSkillName.text = skillType.name;
+					sr.skillName = skillType.name;
+					sr.skillField = skillType.field;
+					
+					this.updateRowData(sr);
+					
+					this.addElement(sr);
+					if(i == 0){
+						sr.y = 120;
+					}else{
+						sr.y = prevSkillRow.y + prevSkillRow.height;
+					}
+					
+					sr.btnBuy.addEventListener(MouseEvent.CLICK, this.onBtnBuyClick);
+					
+					prevSkillRow = sr;
+				}
+				
+				
+				User.getInstance().addEventListener("experienceUp", this.onUserExperienceUp);
+				this.onUserExperienceUp();
+				
+				
+				var tutorialScheme:Object = {delay:-1}
+				tutorialScheme.itemList = new Array(
+					//{x:290, y:160, text:"Read this first. Somebody wrote this to try and be funny, make cash and earn XP."},
+					{target:this.txTotalExperience, text:"This is your total experience points. Levels don't mean much yet, but will in future updates."},
+					{target:this.txLevelPercent, text:"Points necessary to get to the next level. Pretty standard RPG stuff here."},
+					{target:this.txSkillPoints, text:"You gain skill points at the same rate as experience. Use skill points to buy skills from the list below."}
+					//{target:btnInvest, text:"Invest if you think this will get more votes. You will gain cash and experience for every vote, but must share with other investors."},
+					//{target:btnShare, text:"Share this idea on your facebook wall. You must allow popups in your browser."},
+					//{x:190, y:-9, text:"Click here to get words and create your own wacky idea. Click tutorial again for help."}
+				);
+				
+				TutorialManager.getInstance().addSequence(tutorialScheme, "skillMenu");
+			}
+			
+			protected function onBtnBuyClick(evt:MouseEvent):void{
+				this.selectedSkillRow = evt.currentTarget.parent;
+				var skillName:String = this.selectedSkillRow.skillName;
+				if(this.selectedSkillRow.nextLevelDiff > User.getInstance().skillPoints){
+					Alert.show("You do not have enough skill points to buy this.");
+				}else{
+					Alert.show("Are you sure you want to buy " + skillName + " level " + (this.selectedSkillRow.userLevel + 1) + " for " + evt.currentTarget.parent.nextLevelDiff + " points?",
+						"Buy " + skillName, Alert.YES | Alert.NO, null, this.onBuySkillConfirm);
+				}
+			}
+			
+			protected function onBuySkillConfirm(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					var vars:Object = {};
+					vars.field = this.selectedSkillRow.skillField;
+					var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.BUY_SKILL, vars, onBuySkillComplete, true);
+				}
+			}
+			
+			protected function onBuySkillComplete(data:Object, passThru:Object):void{
+				var usr:User = User.getInstance();
+				
+				usr[passThru.field + "_lvl"] = data.lvl;
+				usr[passThru.field] = data.newFieldValue;
+				usr.updateSkillPoints(data.userSP);
+				this.txSkillPoints.text = "Skill Points: " + usr.skillPoints;
+				var sr:SkillDisplayRow = skillRowClips[passThru.field];
+				
+				this.updateRowData(sr);
+				
+				
+			}
+			
+			protected function updateRowData(sr:SkillDisplayRow):void {
+				var usr:User = User.getInstance();
+				
+				//Alert.show("update row data" + sr);
+				var skillType:Object = sr.skillTypeObj;
+				sr.userLevel = usr[skillType.field + "_lvl"];//usr.calculateLevel(usr.skillLevels, skillPoints);
+				sr.txLevel.text = sr.userLevel + "/" + skillType.max;
+				var skillDiff:int = usr.getNextSkillLevelDifference(skillType.field);
+				sr.txNextLevelSP.text = "Next Level: " + skillDiff;
+				sr.nextLevelDiff = skillDiff;
+				//Alert.show("update row data");
+			}
+			
+			protected function onUserExperienceUp (evt:Event = null):void {
+				var usr:User = User.getInstance();
+				this.txTotalExperience.text = "Total XP: " + usr.experiencePoints;
+				this.txNextLevelXP.text = "NextLevel: " + usr.nextLevelValue;
+				this.txLevelPercent.text = "%" + Math.round(usr.nextLevelPercent);
+				this.txSkillPoints.text = "Skill Points: " + usr.skillPoints;
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Label id="txTotalExperience" x="10" y="24" width="232" height="23" fontSize="20"
+			 text="Total experieince: 2569"/>
+	<mx:HRule x="0" y="102" width="100%"/>
+	<s:BorderContainer id="mcProgressBar" x="13" y="56" width="240" height="26"
+					   backgroundAlpha="0.55" backgroundColor="#CDCDCD">
+	</s:BorderContainer>
+	<s:Label id="txNextLevelXP" x="15" y="62" width="148" height="15" fontSize="16"
+			 text="Next Level: 6548" textAlign="center"/>
+	<mx:VRule x="171" y="60" height="18"/>
+	<s:Label id="txLevelPercent" x="185" y="63" width="48" height="15" fontSize="16" text="%36"
+			 textAlign="center"/>
+	<s:Label id="txSkillPoints" x="270" y="24" width="232" height="23" fontSize="20"
+			 text="Skill Points: 2569"/>
+</s:Group>

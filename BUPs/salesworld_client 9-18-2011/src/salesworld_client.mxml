@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="760" height="602" minWidth="760" minHeight="602" xmlns:local="*">
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.core.IUIComponent;
+			import mx.events.DragEvent;
+			import mx.managers.DragManager;
+			
+			import spark.components.Label;
+			import spark.filters.DropShadowFilter;
+			
+			
+			private function drawCard(_type:String):void {
+				if(grCards.numElements >= 7){
+					Alert.show("Sorry, no more than seven cards allowed. To discard, drag a card to the garbage.");
+					return;
+				}
+				
+				var vars:Object = {type:_type};				
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.DRAW_CARD, vars, onDrawCardComplete);
+			}
+			
+			private function onDrawCardComplete(data:Object, passThru:Object):void {
+				var wc:WordCard = new WordCard();
+				wc.lbWord.text = data.word;
+				wc.txDescription.htmlText = data.wordDescription;
+				wc.lbType.text = passThru.type;
+				
+				switch(passThru.type){
+					case "n":
+						wc.lbType.text = "noun";
+						break;
+					case "a":
+						wc.lbType.text = "adj";
+						break;
+					case "v":
+						wc.lbType.text = "verb";
+						break;
+				}
+				
+				wc.addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+				grCards.addElement(wc);
+				updateCardGroupWidth();
+			}
+			
+			private function removeCard(cardIndex:int):void {
+				grCards.removeElementAt(cardIndex);
+				updateCardGroupWidth();
+			}
+			
+			private function updateCardGroupWidth():void {
+				grCards.width = grCards.numElements*(grCards.gap + 120);
+			}
+			
+			private function mouseDownHandler(e:MouseEvent):void {
+				DragManager.doDrag(e.currentTarget as IUIComponent, null, e);
+			}
+			
+			private function dragEnterHandler(e:DragEvent):void {
+				DragManager.acceptDragDrop(e.currentTarget as IUIComponent);
+			}
+			
+			private function dragDropHandler(e:DragEvent):void {
+				
+				var lbl:Label = new Label();
+				var card:WordCard = e.dragInitiator as WordCard;
+				lbl.text = card.lbWord.text;
+				
+				lbl.addEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+
+				pnlWords.addElement(lbl);
+				
+				updateTitleDisplay();
+			}
+			
+			private function garbageDropHandler(evt:DragEvent):void {
+								
+				var tgt:DisplayObject;
+				if(evt.dragInitiator is WordCard){
+					tgt = evt.dragInitiator as DisplayObject;
+					removeCard(grCards.getChildIndex(tgt));
+				}else{
+					var tgt2:Label = evt.dragInitiator as Label;
+					
+					pnlWords.removeElementAt(pnlWords.getElementIndex(tgt2));
+					
+					updateTitleDisplay();
+				}
+			}
+			
+			protected function updateTitleDisplay():void {
+				var prevWord:Label = pnlWords.getElementAt(0) as Label;
+				prevWord.x = 3;
+				prevWord.y = 3;
+				
+				var l:uint = pnlWords.numElements;
+				for(var i:uint = 1; i<l; i++)
+				{
+					var lbl:Label = pnlWords.getElementAt(i) as Label;
+					lbl.x = prevWord.x + prevWord.width + 3;
+					lbl.y = 3;
+					prevWord = lbl;
+				}
+			}
+			
+			protected function btSubmitProduct_clickHandler(event:MouseEvent):void {				
+				var vars:Object = {productString:""};
+				var l:uint = pnlWords.numElements;
+				var last:uint = l - 1;
+				for(var i:uint = 0; i<l; i++){
+					var lbl:Label = pnlWords.getElementAt(i) as Label;
+					vars.productString = vars.productString + lbl.text;
+					if(i != last){
+						vars.productString = vars.productString + ",";
+					}
+				}
+								
+				vars.salesPitch = txSalesPitch.htmlText;
+				
+				Alert.show(vars.salesPitch);
+				
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.SUBMIT_PRODUCT, vars, onSubmitProductComplete);
+			}
+			
+			protected function onSubmitProductComplete(data:Object, passThru:Object):void {
+				Alert.show(data.result + "yaya");
+			}
+			
+			public function removeLinkInput():void {
+				txSalesPitch.toolbar.removeChild(txSalesPitch.linkTextInput);
+			}
+			
+			private function handleAddedToStage():void
+			{
+				var shadow:DropShadowFilter = new DropShadowFilter();
+				shadow.distance = 10;
+				shadow.angle = 25;
+				btDrawNoun.filters = [shadow];
+				btDrawAdjective.filters = [shadow];
+				btDrawVerb.filters = [shadow];
+				
+				Alert.show("handle added");
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<mx:TabNavigator x="10" y="10" width="742" height="580">
+		<s:NavigatorContent id="tbView" width="100%" height="100%" label="Look At Stuff">
+			
+		<local:ProductViewer width="740">
+			
+		</local:ProductViewer>
+			
+		</s:NavigatorContent>
+		<s:NavigatorContent id="tbCreate" width="100%" height="100%" label="Invent Stuff">
+			<s:Scroller id="scCards" left="7" top="5" width="726" height="192"
+						horizontalCenter="0" textAlign="center">
+				<s:VGroup width="100%" height="100%">
+					<s:HGroup id="grCards" width="605" height="169">
+					</s:HGroup>
+				</s:VGroup>
+			</s:Scroller>
+			<s:Button id="btDrawNoun" x="534" y="205" width="100" label="Draw Noun"
+					  click="drawCard('n')"/>
+			<s:Button id="btDrawAdjective" x="534" y="242" width="100" label="Draw Adjective"
+					  click="drawCard('a')"/>
+			<s:Button id="btDrawVerb" x="534" y="281" width="100" label="Draw Verb"
+					  click="drawCard('v')" skinClass="spark.skins.spark.ButtonSkin"/>
+			<s:Panel id="pnlWords" x="3" y="205" width="514" height="98"
+					 dragDrop="dragDropHandler(event);" dragEnter="dragEnterHandler(event);"
+					 dropShadowVisible="true" fontFamily="Arial" fontSize="14"
+					 skinClass="spark.skins.spark.PanelSkin"
+					 title="Drag word cards here to create your product">
+			</s:Panel>
+			
+			<s:Panel id="txOld" x="650" y="205" width="86" height="70" dropShadowVisible="true"
+					 dragDrop="garbageDropHandler(event);" dragEnter="dragEnterHandler(event);" fontSize="16" title="Garbage">
+			</s:Panel>
+			<mx:RichTextEditor id="txSalesPitch" x="3" y="311" width="614" height="225"
+							   creationComplete="removeLinkInput()" dropShadowVisible="true"
+							   fontSize="14" textAlign="left" title="Type your hilarious sales pitch here:"/>
+			<s:Button id="btSubmitProduct" x="456" y="496" width="152" height="32"
+					  label="Invent Product!" click="btSubmitProduct_clickHandler(event)"
+					  fontSize="19"/>
+			
+			
+		</s:NavigatorContent>
+		<s:NavigatorContent width="100%" height="100%" label="Other Stuff">
+			<mx:RichTextEditor id="rte1" 
+							   width="500"
+							   title="Rich Text Editor" 
+							   />
+		</s:NavigatorContent>
+	</mx:TabNavigator>
+</s:Application>

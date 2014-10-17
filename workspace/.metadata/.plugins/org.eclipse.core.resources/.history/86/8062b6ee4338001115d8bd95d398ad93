@@ -1,0 +1,67 @@
+var Message = Spine.Model.setup("Message", ["sMessage", "sUserID", "sUserName",  
+                                            "bPerformer", "bPrivate", "bCurrentUser"]);
+
+
+Message.extend(Spine.Events);
+
+//add static properties
+Message.extend({
+		
+    //get this from our config data.
+  maxMessages : 20,
+		
+	addMessage : function (oMsg){
+	  "use strict";
+		//send message to server and create new Message instance
+		var newMessage = Message.init(oMsg);
+		newMessage.save();
+		
+		//trim old messages if we're over our message budget
+		if(Message.count() > Message.maxMessages){
+			return Message.trim();
+		}else{
+			this.trigger("newMessage");
+			return true;
+		}
+	},
+	
+	//I think we should remove this function and use Message.all() directly
+	getAllMessages : function (){
+	  "use strict";
+    //find all messages by a certain user id
+    return Message.all();
+  },
+  
+  //TODO: pass user ID or "system", "performer", or "me"
+  filteredMessages : function(type){
+  
+    return Message.all();
+  },
+  
+  //get rid of old messages
+  //it might make more sense to call this from the controller
+  trim : function (maxMessages){
+    var oShortList = Message.records;
+    
+    console.log("trim");
+    
+    //cut our list down to half of the maximum 
+    var cutIndex = Message.count() - Math.round(Message.maxMessages/2);
+    //oShortList.splice(0, cutIndex);
+    console.log(Message.count() + " and " + cutIndex + " and " + oShortList.length + " and " + oShortList);
+    
+    this.refresh(oShortList);
+    //this.trigger("trimmed");
+    return true;
+    
+  }
+});
+
+//add instance properties
+Message.include({
+  sMessage : "",
+	sUserID : "",
+	sUserName : "",
+	bPerformer : "",
+	bPrivate : ""
+});

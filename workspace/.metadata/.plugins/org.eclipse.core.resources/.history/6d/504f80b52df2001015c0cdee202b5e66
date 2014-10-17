@@ -1,0 +1,57 @@
+import os
+import cgi
+import logging
+import md5
+import base64
+import utils
+import urllib
+import random
+import os.path
+import wsgiref.handlers
+
+import hashlib
+import hmac
+import simplejson as json
+
+from datetime import datetime
+from google.appengine.ext import db
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp import template
+from google.appengine.ext.webapp.util import run_wsgi_app
+from google.appengine.api import memcache
+from mapreduce import operation as op
+
+
+
+class AdminPage(webapp.RequestHandler):
+     def get(self):
+          template_values = {}
+          path = os.path.join(os.path.dirname(__file__), 'jindex.html')
+          self.response.out.write(template.render(path, template_values))
+
+class SubmitWordCard(webapp.RequestHandler):
+     def post(self):
+          wordType = self.request.get('wordType')
+          if wordType == 'n':
+                wordCard = NounCard()
+                memcache.delete("nCache")
+          elif wordType == 'a':
+                wordCard = AdjectiveCard()
+                memcache.delete("aCache")
+          elif wordType == 'v':
+                wordCard = VerbCard()
+                memcache.delete("vCache")
+          wordCard.wordString = self.request.get('wordString')
+          wordCard.wordDescription = self.request.get('wordDescription')
+          wordCard.put()
+          self.response.out.write('success')
+          
+          application = webapp.WSGIApplication([('/adminPage', AdminPage),
+                            ('/submitWordCard', SubmitWordCard)],
+                                                  debug=True)
+
+def main():
+     run_wsgi_app(application)
+
+if __name__ == "__main__":
+     main()

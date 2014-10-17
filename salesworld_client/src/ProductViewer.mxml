@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 addedToStage="handleAddedToStage()"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="740" height="545">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>	
+	<fx:Script>
+		<![CDATA[
+			//import flashx.textLayout.conversion.ConversionType;
+			//import flashx.textLayout.conversion.TextConverter;
+			
+			import com.adobe.serialization.json.JSON;
+			
+			import mx.controls.Alert;
+			import mx.formatters.DateFormatter;
+			
+			//--------theoretical model section
+			private var cachedProducts:Array = new Array();
+			private var cachedProductIndex:uint = 0;
+			//-------------------
+			
+			private var tutorialManager:TutorialManager;
+			
+			protected function handleAddedToStage():void {
+				getRandomProduct();
+				txSalesPitch.editable = false;
+				this.showUserVoteCount();
+				
+								
+				var tutorialScheme:Object = {delay:-1}
+				tutorialScheme.itemList = new Array(
+						{x:290, y:160, text:"Read this first. Somebody wrote this to try and be funny, make cash and earn XP."},
+						{target:btnNext, text:"If this idea is boring or lame, click here to see the next one."},
+						{target:btnVoteUp, text:"Click here if this idea is hilarious or otherwise awesome. Just don't waste all your votes on one idea."},
+						{target:btnVoteDown, text:"Click here if this idea sucks. Use all your down-votes to prove how much you hate it."},
+						{target:btnInvest, text:"Invest if you think this will get more votes. You will gain cash and experience for every vote, but must share with other investors."},
+						{target:btnShare, text:"Share this idea on your facebook wall. You must allow popups in your browser."},
+
+						{x:190, y:-9, text:"Click here to get words and create your own wacky idea. Click tutorial again for help."}
+					);
+				
+				TutorialManager.getInstance().addSequence(tutorialScheme, "productViewer");
+				
+				User.getInstance().addEventListener("skillPointsUpdated", this.onSkillPointsUpdated);	
+				
+			}
+			
+			protected function getRandomProduct():void {
+				var vars:Object = {count:1, order:"rand"};
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.GET_PRODUCT, vars, onGetProductComplete);
+			}
+			
+			protected function onGetProductComplete(data:Object, passThru:Object):void {				
+				cachedProducts.push(data);
+				var salesPitch:String = cachedProducts[cachedProducts.length - 1].salesPitch;
+				while(salesPitch.indexOf("[amp]") >= 0){
+					salesPitch = salesPitch.replace("[amp]", "&");
+				}
+				cachedProducts[cachedProducts.length - 1].salesPitch = salesPitch;
+				showProduct(cachedProducts.length - 1);
+				
+				//Alert.show(User.id + " and " + User.oauth_token)
+			}
+			
+			protected function showProduct(index:uint):void {
+				cachedProductIndex = index;
+				txSalesPitch.htmlText = cachedProducts[index].salesPitch;
+				txProductTitle.text = cachedProducts[index].productString;
+				
+				//Alert.show(cachedProducts[index].key);
+				
+				
+				var date:Date = DateFormatter.parseDateString(cachedProducts[index].creationDate);
+				
+				if(cachedProductIndex > 0){
+					btnPrev.enabled = true;
+				}else{
+					btnPrev.enabled = false;
+				}
+								
+				var request:URLRequest = new URLRequest("https://graph.facebook.com/" + cachedProducts[index].user_id + "?fields=id,name");
+				var loader:URLLoader = new URLLoader();
+				
+				loader.addEventListener(Event.COMPLETE, handleComplete);
+				loader.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				loader.load(request);				
+				imgProductUserAvatar.source = "http://graph.facebook.com/" + cachedProducts[index].user_id + "/picture";
+				
+				this.txProductInfo.text = " invented this on " + date.toDateString();
+				this.showVoteCount();
+			}
+			
+			private function onIOError(event:IOErrorEvent):void {
+				Alert.show("Error!!!!!!" + event.text);
+			}
+			
+			protected function handleComplete(event:Event):void
+			{
+				var loader:URLLoader = URLLoader(event.target);
+				var obj:Object = JSON.decode(loader.data);
+				
+				//if we haven't moved onto the next product, give this name to the current cachedProduct
+				if(obj.id == cachedProducts[cachedProductIndex].user_id){
+					cachedProducts[cachedProductIndex].user_name = obj.name;
+				}
+					
+				
+				//Alert.show(loader.data);
+				this.txProductInfo.text = obj.name + this.txProductInfo.text;
+			}
+			
+			protected function btnNext_clickHandler(event:MouseEvent):void {
+				if(cachedProductIndex == cachedProducts.length - 1){
+					getRandomProduct();
+				}else{
+					showProduct(cachedProductIndex + 1);
+				}
+			}
+			
+			protected function btnPrev_clickHandler(event:MouseEvent):void {
+				showProduct(cachedProductIndex - 1);
+			}
+			
+			protected function btnVoteDown_clickHandler(event:MouseEvent):void{
+				if(User.getInstance().downVoteCount <= 0){
+					Alert.show("You are out of down votes. You will gain " + User.getInstance().downVoteDailyBonus + " more votes within 24 hours.");
+					return;
+				}
+				this.callVote("down");
+			}
+			
+			protected function btnVoteUp_clickHandler(event:MouseEvent):void{
+				if(User.getInstance().upVoteCount <= 0){
+					Alert.show("You are out of up votes. You will gain " + User.getInstance().upVoteDailyBonus + " more votes within 24 hours.");
+					return;
+				}
+				this.callVote("up");
+			}
+			
+			protected function callVote(voteType:String):void{
+				btnPrev.enabled = false;
+				btnNext.enabled = false;
+				var vars:Object = {};
+				vars.voteType = voteType;
+				vars.key = this.cachedProducts[this.cachedProductIndex].key;
+				vars.XPx = this.btnVoteUp.x;
+				vars.XPy = this.btnVoteUp.y;
+				//vars.user_id = User.id;
+				//vars.oauth_token = User.oauth_token;
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.PRODUCT_VOTE, vars, onVoteComplete, true);
+			}
+			
+			protected function onVoteComplete(data:Object, passThru:Object):void{
+				//var product:Object = JSON.decode(unescape(data))
+				//Alert.show(data.userUpVoteCount + " and " + data.userDownVoteCount);
+				
+				btnNext.enabled = true;
+				
+				if(cachedProductIndex > 0){
+					btnPrev.enabled = true;
+				}else{
+					btnPrev.enabled = false;
+				}
+				
+				cachedProducts[cachedProducts.length - 1].upVoteCount = data.productUpVoteCount;
+				cachedProducts[cachedProducts.length - 1].downVoteCount = data.productDownVoteCount;
+				
+				var usr:User = User.getInstance();
+				usr.upVoteCount = data.userUpVoteCount;
+				usr.downVoteCount = data.userDownVoteCount;
+				
+				
+				
+				this.showUserVoteCount();
+				
+				this.showVoteCount();
+			}
+			
+			protected function onSkillPointsUpdated(evt:Event):void{
+				//Alert.show("on skiill points updated");
+				this.showUserVoteCount();
+			}
+			
+			protected function showVoteCount():void {
+				this.txUpVotes.text = "Up Votes: " + cachedProducts[cachedProducts.length - 1].upVoteCount;
+				this.txDownVotes.text = "Down Votes: " + cachedProducts[cachedProducts.length - 1].downVoteCount
+			}
+			
+			protected function showUserVoteCount():void{
+				var usr:User = User.getInstance();
+				btnVoteDown.label = "Vote Down (" + usr.downVoteCount + " / " + usr.downVoteMax + ")";
+				btnVoteUp.label = "Vote Up (" + usr.upVoteCount + " / " + usr.upVoteMax + ")";
+				this.btnInvest.label = "Invest (" + usr.investmentTokens + ")";
+			}
+			
+			protected function btnInvest_clickHandler(event:MouseEvent):void {
+				var vars:Object = {count:1, order:"rand"};
+				vars.key = this.cachedProducts[this.cachedProductIndex].key
+				var appEngineCall:AppEngineCall = new AppEngineCall(AppEngineCall.INVEST, vars, onInvestComplete, true);
+			}
+			
+			protected function onInvestComplete(data:Object, passThru:Object):void{
+				User.getInstance().investmentTokens = data.investmentTokens;
+				showUserVoteCount();
+			}
+			
+			protected function btnShare_clickHandler(event:MouseEvent):void {
+				FacebookPostManager.getInstance().postProduct(this.cachedProducts[this.cachedProductIndex], txSalesPitch.text);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+	</fx:Declarations>
+
+	
+	<s:Button id="btnNext" x="608" y="148" width="118" label="Next Product &gt;&gt;"
+			  click="btnNext_clickHandler(event)"/>
+	<s:Label id="txProductTitle" x="10" y="39" width="720" height="69" fontSize="26" text="Label" textAlign="center"/>
+	<s:Button id="btnPrev" x="608" y="120" width="118" label="&lt;&lt; Previous"
+			  click="btnPrev_clickHandler(event)"/>
+	<s:Button id="btnVoteUp" x="608" y="177" width="118" label="Vote Up"
+			  click="btnVoteUp_clickHandler(event)" enabled="true"/>
+	<s:Button id="btnVoteDown" x="608" y="206" width="118" label="Vote Down"
+			  click="btnVoteDown_clickHandler(event)" enabled="true"/>
+	<s:Button id="btnInvest" x="608" y="235" width="119" label="Invest"
+			  click="btnInvest_clickHandler(event)" enabled="true"/>
+	<mx:TextArea id="txSalesPitch" x="11" y="120" width="589" height="163" dropShadowVisible="true"></mx:TextArea>
+	<s:Image id="imgProductUserAvatar" x="12" y="295" width="50" height="50"/>
+	<s:Label id="txUpVotes" x="74" y="331" width="95" text="Up Votes:"/>
+	<s:Label id="txDownVotes" x="175" y="331" width="104" text="Down Votes:"/>
+	<s:Label id="txProductInfo" x="74" y="311" width="389" fontSize="14" text="Label"/>
+	<s:Button id="btnShare" x="608" y="265" width="119" label="Share"
+			  click="btnShare_clickHandler(event)" enabled="true"/>
+	
+</s:Group>

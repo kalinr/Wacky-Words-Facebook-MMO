@@ -1,0 +1,226 @@
+<html>
+<head>
+	<link type="text/css" rel="stylesheet" href="/css/styles.css" />
+	<link type="text/css" rel="stylesheet" href="/css/anytime.css" />
+	<script type="text/javascript" src="/js/jquery.js" ></script>
+    <script type="text/javascript" src="/js/jquery.dropshadow.js" ></script>
+	<script type="text/javascript" src="/js/anytime.js" ></script>
+	<script src="js/swfobject_modified.js" type="text/javascript"></script>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		AnyTime.widget( "startdate", { format: "%Y-%m-%d %T" } );
+		AnyTime.widget( "enddate", { format: "%Y-%m-%d %T" } );
+		
+		
+	});
+	
+	function selectBanner(client, campaign, banner){
+		document.dateRangeForm.client.value = client;
+		document.dateRangeForm.campaign.value = campaign;
+		document.dateRangeForm.banner.value = banner;
+		
+		document.customFieldForm.cusClient.value = client;
+		document.customFieldForm.cusCampaign.value = campaign;
+		document.customFieldForm.cusBanner.value = banner;
+	}
+	
+	function fieldValueDatePicker(){
+		//alert("datePicker");
+		AnyTime.widget( "fieldValue", { format: "%Y-%m-%d %T" } );
+	}
+	
+	function initUpdateDate(client, campaign, banner, id){
+		document.dateRangeForm.client.value = client;
+		document.dateRangeForm.campaign.value = campaign;
+		document.dateRangeForm.banner.value = banner;
+		document.dateRangeForm.fieldID.value = id;
+		
+		var txt=document.getElementById("daterangeHeader");
+  		txt.innerHTML="<p>Update date range for: " + id + "</p>";
+		
+		//write code to lock client, campaign and banner fields
+	}
+	
+	function initUpdateCustom(client, campaign, banner, id, fieldName){
+		document.customFieldForm.cusClient.value = client;
+		document.customFieldForm.cusCampaign.value = campaign;
+		document.customFieldForm.cusBanner.value = banner;
+		document.customFieldForm.cusFieldID.value = id;
+		document.customFieldForm.fieldName.value = fieldName;
+		
+		var txt=document.getElementById("customHeader");
+  		txt.innerHTML="<p>Update custom field for: " + id + "</p>";
+		
+		//write code to lock client, campaign, banner and fieldName fields
+	}
+	
+	function clearDateRange(){
+		document.dateRangeForm.client.value = "";
+		document.dateRangeForm.campaign.value = "";
+		document.dateRangeForm.banner.value = "";
+		document.dateRangeForm.fieldID.value = "new";
+		document.dateRangeForm.startdate.value = "";
+		document.dateRangeForm.enddate.value = "";
+		
+		var txt=document.getElementById("daterangeHeader");
+  		txt.innerHTML = "<p>new date range:</p>";
+		
+		//write code to un-lock client, campaign and banner fields
+	}
+	
+	function clearCustom(){
+		document.customFieldForm.cusClient.value = "";
+		document.customFieldForm.cusCampaign.value = "";
+		document.customFieldForm.cusBanner.value = "";
+		document.customFieldForm.cusFieldID.value = "new";
+		document.customFieldForm.fieldName.value = "";
+		document.customFieldForm.fieldValue.value = "";
+		
+		var txt=document.getElementById("customHeader");
+  		txt.innerHTML = "<p>new custom field:</p>";
+		
+		//write code to un-lock client, campaign, banner and fieldName fields (or add code into the main.py to change the client, campaign and banner)
+		//add code to undo the date picker so it's not atached to the field value textarea (or make it so that the date picker button simply opens the popup instead of attaching it to the form field)
+	}
+	
+	function showHelp(nodeName){
+		/*if (window.XMLHttpRequest){
+		  	xhttp=new XMLHttpRequest();
+		} else { // Internet Explorer 5/6
+			xhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		}*/
+		xhttp=new XMLHttpRequest();
+		xhttp.open("GET","/js/help.xml",false);
+		xhttp.send("");
+		xmlDoc=xhttp.responseXML; 
+		
+		var helpString = xmlDoc.getElementsByTagName(nodeName)[0].childNodes[0].nodeValue;
+		
+		//alert(helpString);
+		
+		
+		var txt=document.getElementById("helpPopupInternal");
+  		txt.innerHTML = helpString;
+		
+		var helpDiv=document.getElementById("helpPopup");
+		helpDiv.style.visibility = "visible";
+		
+		var helpShadowDiv = document.getElementById("helpShadow");
+		$(helpShadowDiv).removeShadow();
+		$(helpShadowDiv).dropShadow();
+		//this shadow works (kinda) but I need to show/hide it along with the rest of the div and also make a parent div that can be used for positioning
+	}
+	
+	function hideHelp(){
+		var helpDiv=document.getElementById("helpPopup");
+		helpDiv.style.visibility = "hidden";
+	}
+	
+	</script>
+</head>
+<body>
+<div class="tableDiv">
+	 <form action="">Date Ranges: <input type="button" value="Help" onClick="showHelp('date_range_table')"></form>
+	<table width="1000px" border="1" cellspacing="1" cellpadding="3">
+		<tr>
+        	<th scope="col">hits</th>
+			<th scope="col">client</th>
+			<th scope="col">campaign</th>
+			<th scope="col">banner</th>
+			<th scope="col">start date</th>
+			<th scope="col">end date</th>
+			<th scope="col">ID</th>
+            <th scope="col">select</th>
+            <th scope="col">delete</th>
+            <th scope="col">update</th>
+		</tr>
+	{% for daterange in dateranges %}  
+		<tr>
+        	<td>{{ daterange.querryCount|escape }}</td>
+			<td>{{ daterange.client|escape }}</td>
+			<td>{{ daterange.campaign|escape }}</td>
+			<td>{{ daterange.banner|escape }}</td>
+			<td>{{ daterange.startDate|escape }}</td>
+			<td>{{ daterange.endDate|escape }}</td>
+			<td>{{ daterange.rangeID|escape }}</td>
+            <td><form action=""><input type="button" value="Select" onClick="selectBanner('{{ daterange.client|escape }}', '{{ daterange.campaign|escape }}', '{{ daterange.banner|escape }}')"></form></td>
+            <td><form action="/deleteDate" mdethod="get"><input type="hidden" name="delRangeID" value='{{ daterange.rangeID|escape }}'><input type="submit" value="Delete"></form></td>
+            <td><form action=""><input type="button" value="Update" onClick="initUpdateDate('{{ daterange.client|escape }}', '{{ daterange.campaign|escape }}', '{{ daterange.banner|escape }}', '{{ daterange.rangeID|escape }}')"></form></td>
+		</tr>
+	{% endfor %}
+	</table>
+    </div>
+    <div class="tableDiv">
+    <form action="">Custom Fields: <input type="button" value="Help" onClick="showHelp('custom_field_table')"></form>
+    <table width="1000px" border="1" cellspacing="1" cellpadding="3">
+		<tr>
+        	<th scope="col">hits</th>
+			<th scope="col">client</th>
+			<th scope="col">campaign</th>
+			<th scope="col">banner</th>
+			<th scope="col">field name</th>
+			<th scope="col">field value</th>
+            <th scope="col">ID</th>
+            <th scope="col">select</th>
+            <th scope="col">delete</th>
+            <th scope="col">update</th>
+		</tr>
+	{% for customField in customFields %}  
+		<tr>
+        	<td>{{ customField.querryCount|escape }}</td>
+			<td>{{ customField.client|escape }}</td>
+			<td>{{ customField.campaign|escape }}</td>
+			<td>{{ customField.banner|escape }}</td>
+			<td>{{ customField.fieldName|escape }}</td>
+			<td>{{ customField.fieldValue|escape }}</td>
+            <td>{{ customField.fieldID|escape }}</td>
+            <td><form action=""><input type="button" value="Select" onClick="selectBanner('{{ customField.client|escape }}', '{{ customField.campaign|escape }}', '{{ customField.banner|escape }}')"></form></td>
+            <td><form action="/deleteCustom" method="get"><input type="hidden" name="fieldID" value='{{ customField.fieldID|escape }}'><input type="submit" value="Delete"></form></td>
+            <td><form action=""><input type="button" value="Update" onClick="initUpdateCustom('{{ customField.client|escape }}', '{{ customField.campaign|escape }}', '{{ customField.banner|escape }}', '{{ customField.fieldID|escape }}', '{{ customField.fieldName|escape }}')"></form></td>
+		</tr>
+	{% endfor %}
+	</table>
+    </div>
+    
+<div class="formDiv">
+    
+	<div id="daterangeHeader"><p>new date range:</p></div>
+	<form name="dateRangeForm" action="/addDates" method="post">
+		<div><p>client: <span class="dateFormElement"><textarea name="client" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>campaign: <span class="dateFormElement"><textarea name="campaign" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>banner: <span class="dateFormElement"><textarea name="banner" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>start date: <span class="dateFormElement"><textarea name="startdate" id="startdate" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>end date: <span class="dateFormElement"><textarea name="enddate" id="enddate" rows="1" cols="32"></textarea></span></p></div>
+        <input type="hidden" name="fieldID" value='new'>
+        <br/>
+		<div><input type="submit" value="Submit">&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Clear" onClick="clearDateRange()">&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Help" onClick="showHelp('date_range_form')"></div>
+	</form>
+    
+    
+    
+</div>
+    
+  
+<div class="formDiv">
+    <div id="customHeader"><p>new custom field:</p></div>
+	<form name="customFieldForm" action="/addFields" method="post">
+		<div><p>client: <span class="customFormElement"><textarea name="cusClient" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>campaign: <span class="customFormElement"><textarea name="cusCampaign" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>banner: <span class="customFormElement"><textarea name="cusBanner" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>field name: <span class="customFormElement"><textarea name="fieldName" rows="1" cols="32"></textarea></span></p></div>
+		<div><p>field value: <span class="customFormElement"><textarea name="fieldValue" id="fieldValue" rows="1" cols="32"></textarea>&nbsp;&nbsp;<input type="button" value="date picker" onClick="fieldValueDatePicker()"></p></div><br/>
+		<input type="hidden" name="cusFieldID" value='new'>
+        <div><input type="submit" value="Submit">&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Clear" onClick="clearCustom()">&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Help" onClick="showHelp('custom_field_form')"></div>
+	</form>
+    </div>
+    
+
+<div id="helpPopup" class="helpPopup">
+	<div id="helpShadow" class="helpShadow">
+		<div id="helpPopupInternal"></div><br/>
+		<input type="button" value="Close" onClick="hideHelp()">
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+
+cron:
+  - description: DailyStats MapReduce
+  url: /cron_mapreduce/
+  schedule: every 24 hours

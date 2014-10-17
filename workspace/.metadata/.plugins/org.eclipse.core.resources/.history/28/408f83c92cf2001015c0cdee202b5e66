@@ -1,0 +1,32 @@
+class AdminPage(webapp.RequestHandler):
+     def get(self):
+          template_values = {}
+          path = os.path.join(os.path.dirname(__file__), 'jindex.html')
+          self.response.out.write(template.render(path, template_values))
+
+class SubmitWordCard(webapp.RequestHandler):
+     def post(self):
+          wordType = self.request.get('wordType')
+          if wordType == 'n':
+                wordCard = NounCard()
+                memcache.delete("nCache")
+          elif wordType == 'a':
+                wordCard = AdjectiveCard()
+                memcache.delete("aCache")
+          elif wordType == 'v':
+                wordCard = VerbCard()
+                memcache.delete("vCache")
+          wordCard.wordString = self.request.get('wordString')
+          wordCard.wordDescription = self.request.get('wordDescription')
+          wordCard.put()
+          self.response.out.write('success')
+          
+          application = webapp.WSGIApplication([('/adminPage', AdminPage),
+                            ('/submitWordCard', SubmitWordCard),
+                                                  debug=True)
+
+def main():
+     run_wsgi_app(application)
+
+if __name__ == "__main__":
+     main()

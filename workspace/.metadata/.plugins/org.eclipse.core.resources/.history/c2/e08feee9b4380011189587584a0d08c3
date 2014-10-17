@@ -1,0 +1,84 @@
+function runTest()
+{
+	
+	//Spine version testing
+	var oModel = Message;
+	var oUserModel = User;
+	
+	//plain version testing:
+	//var oModel = chatModel;
+	//var oUserModel = oModel;
+	
+	//alert(chatModel);
+ 
+  module( "Chat Test", {
+    setup: function() {},
+    teardown: function() {}
+        
+  });
+  
+  test( "Messages model", function() {
+    expect( 9 );
+    
+    var l, testMessage, msgSent, testUserName, msgReceived, msgs, i;
+    
+    l = oModel.getAllMessages().length;
+    strictEqual(l, 0, "Messages.length not equal to 0");
+    
+    testMessage = "This is my test message";
+    
+    msgSent = oModel.addMessage({sMessage:testMessage});
+    
+    ok(msgSent, "Message.sendMessaged() failed to send");
+    
+    l = oModel.getAllMessages().length;
+    equal(l, 1, "Messages.length not equal to 1 after send");
+    
+    testUserName = "myTestUserName";
+    msgReceived = oModel.addMessage({sUserName:testUserName});
+    ok(msgReceived, "Message.addMessage() failed to add");
+    
+    msgs = oModel.getAllMessages();
+    equal(msgs.length, 2, "aMessages.length not equal to 2 after receive");
+    
+    equal(msgs[0].sMessage, testMessage, "first message does not match testMessage");
+    
+    equal(msgs[1].sUserName, testUserName, "second userName does not match testUserName");
+    
+    //start fresh
+    oModel.deleteAll();
+    strictEqual(Message.count(), 0, "Message.count() not equal to 0 after deleteAll()");
+    
+    //add messages until we reach our maximum
+    for(i = 0; i<Message.maxMessages; i++){
+      oModel.addMessage({sMessage:"Message " + i});
+    }
+    
+    equal(Message.count(), Message.maxMessages/2, "After hitting max messages, it should have automatically trimmed down to half the maximum");
+    
+  });
+  
+  test( "Users model", function() {
+    expect( 5 );
+        
+    strictEqual(oUserModel.getUsers().length, 0, "user Array must be zero at start");
+    
+    var testUserName = "myTestUserName2";
+    var userAdded = oUserModel.addUser({sUserName:testUserName, id:1});
+    
+    ok(userAdded, "addUser failed");
+    
+    var aUsers = oUserModel.getUsers();
+     equal(aUsers.length, 1, "user Array length must be 1 after first user added");
+    
+    //alert(aUsers[0].id + " and " + aUsers[0]);
+    
+    var userRemoved = oUserModel.removeUser(aUsers[0].id);
+    ok(userRemoved, "removeUser failed");
+    
+    strictEqual(oUserModel.getUsers().length, 0, "user Array must be zero after removal");
+    
+    
+  });
+  
+}
